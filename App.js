@@ -10,6 +10,7 @@ import React, {useState, useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
+Alert,
   ScrollView,
   View,
   Text,
@@ -25,35 +26,40 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-import NfcManager , {NfcEvents} from 'react-native-nfc-manager';
+import NfcManager , {NfcEvents, NdefParser} from 'react-native-nfc-manager';
 import codePush from "react-native-code-push";
 
 
 function App() {
 
+  const [NFCmessage, setNFCmessage] = useState(false);
 
   const cancel = () => {
       NfcManager.unregisterTagEvent().catch(() => 0);
+      setNFCmessage('-');
   };
 
   const test = async () => {
+
+
       try {
           await NfcManager.registerTagEvent();
       } catch (ex) {
           console.warn('ex', ex);
+
           NfcManager.unregisterTagEvent().catch(() => 0);
       }
   };
 
-  const [] = useState(false);
+
 
 
   useEffect(() => {
     if( NfcManager != null){
       NfcManager.start();
       NfcManager.setEventListener(NfcEvents.DiscoverTag, tag => {
-        alert('tag', tag);
         NfcManager.setAlertMessageIOS('I got your tag!');
+          setNFCmessage(NdefParser.parseText(tag.ndefMessage[0]));
         NfcManager.unregisterTagEvent().catch(() => 0);
       });
     }
@@ -66,17 +72,18 @@ function App() {
         <Text>NFC Demo</Text>
         <TouchableOpacity
             style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
-            onPress={() => null }
+            onPress={test}
         >
           <Text>Test</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
             style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
-            onPress={() => null }
+            onPress={cancel}
         >
           <Text>Cancel Test</Text>
         </TouchableOpacity>
+          <Text>NFC message:{NFCmessage || '-'}</Text>
       </View>
   );
 }
