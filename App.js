@@ -6,7 +6,7 @@
  * @flow
  */
 
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -28,11 +28,26 @@ import {
 
 import NfcManager , {NfcEvents, NdefParser} from 'react-native-nfc-manager';
 import codePush from "react-native-code-push";
+import { RNCamera } from 'react-native-camera';
 
+const PendingView = () => (
+    <View
+        style={{
+            flex: 1,
+            backgroundColor: 'lightgreen',
+            justifyContent: 'center',
+            alignItems: 'center',
+        }}
+    >
+        <Text>Waiting</Text>
+    </View>
+);
 
 function App() {
 
-  const [NFCmessage, setNFCmessage] = useState(false);
+  const [NFCmessage, setNFCmessage] = useState(null);
+  const [barcode, setBarcode] = useState(null);
+  const cameraRef = useRef(null);
 
   const cancel = () => {
       NfcManager.unregisterTagEvent().catch(() => 0);
@@ -51,6 +66,10 @@ function App() {
       }
   };
 
+  const barcodeHandler = barcodeData => setBarcode(barcodeData);
+
+
+
 
 
 
@@ -63,12 +82,11 @@ function App() {
         NfcManager.unregisterTagEvent().catch(() => 0);
       });
     }
-
   });
 
   return (
 
-      <View style={styles.pageStyle} key="2">
+      <ScrollView alignContent={'center'} style={styles.pageStyle} key="2">
         <Text>NFC Demo</Text>
         <TouchableOpacity
             style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
@@ -84,16 +102,46 @@ function App() {
           <Text>Cancel Test</Text>
         </TouchableOpacity>
           <Text>NFC message:{NFCmessage || '-'}</Text>
-      </View>
+          <Text>QR code Scanner</Text>
+          <RNCamera
+              ref={cameraRef}
+              type={RNCamera.Constants.Type.back}
+              style={{
+                  flex: 1,
+                  borderWidth: 1,
+                  borderStyle: 'solid',
+                  borderColor: 'red',
+                  minHeight: 450,
+                  margin: 20
+              }}
+              autofocus={RNCamera.Constants.AutoFocus.off}
+              focusDepth={0.1}
+              onBarCodeRead={barcodeHandler}
+          >
+              {({ camera, status, recordAudioPermissionStatus }) => {
+                  if (status !== 'READY') return <PendingView />;
+              }}
+              </RNCamera>
+          <TouchableOpacity
+              style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
+              onPress={() => setBarcode(null)}s
+          >
+              <Text>Reset</Text>
+          </TouchableOpacity>
+
+          <Text style={{padding: 10, width: 200, margin: 20}}>QR codes: {barcode != null ? barcode.data : '-'}</Text>
+
+      </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   viewPager: {
-    flex: 1
+    flex: 1,
+      height: '100%'
   },
   pageStyle: {
-    alignItems: 'center',
+
     padding: 20,
   }
 });
