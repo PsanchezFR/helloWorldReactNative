@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">Hello_World_App</string>
-    <string name="CodePushDeploymentKey">Hello_World_App</string>
+    <string moduleConfig="true" name="CodePushDeploymentKey">WbxaYkSBhSAKCqmdL0PFyt_hMPPCSElfJr-u4</string>
 </resources>

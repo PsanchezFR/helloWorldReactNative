@@ -13,7 +13,7 @@ import {
   ScrollView,
   View,
   Text,
-  StatusBar,
+  StatusBar, TouchableOpacity,
 } from 'react-native';
 
 import {
@@ -23,54 +23,91 @@ import {
   DebugInstructions,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import codePush from "react-native-code-push";
 
-const App: () => React$Node = () => {
+
+function App() {
+
+  //
+  // const cancel = () => {
+  //     NfcManager.unregisterTagEvent().catch(() => 0);
+  // };
+
+  // const test = async () => {
+  //     try {
+  //         await NfcManager.registerTagEvent();
+  //     } catch (ex) {
+  //         console.warn('ex', ex);
+  //         NfcManager.unregisterTagEvent().catch(() => 0);
+  //     }
+  // };
+
+  const [] = useState(false);
+
+
+  useEffect(() => {
+    const updater = new Updater({
+      repo: 'pct-org/getting-started',
+
+      onUpdateAvailable: onUpdateAvailable,
+      onDownloadStart: onDownloadStart,
+      onProgress: onProgress,
+    });
+
+    if( NfcManager != null){
+      NfcManager.start();
+      NfcManager.setEventListener(NfcEvents.DiscoverTag, tag => {
+        alert('tag', tag);
+        NfcManager.setAlertMessageIOS('I got your tag!');
+        NfcManager.unregisterTagEvent().catch(() => 0);
+      });
+    }
+
+  });
+
+  // UPDATE FUNCTIONS
+
+  const onUpdateAvailable = (githubRelease, update) => {
+    this.setState({
+      updateAvailable: true,
+      animating: true,
+      githubRelease,
+      update,
+    })
+  };
+
+  const onDownloadStart = () => {
+    this.setState({
+      updating: true,
+    })
+  };
+
+  const onProgress = (progress) => {
+    this.setState({
+      progress,
+    })
+  };
+
   return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
+
+      <View style={styles.pageStyle} key="2">
+        <Text>NFC Demo</Text>
+        <TouchableOpacity
+            style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
+            onPress={() => null }
+        >
+          <Text>Test</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+            style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
+            onPress={() => null }
+        >
+          <Text>Cancel Test</Text>
+        </TouchableOpacity>
+      </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   scrollView: {
@@ -110,5 +147,5 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 });
-
+App = codePush(App);
 export default App;
