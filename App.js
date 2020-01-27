@@ -7,15 +7,18 @@
  */
 
 import React, {useState, useEffect, useRef} from 'react';
+import {TabView, TabBar, SceneMap} from "react-native-tab-view";
 import {
-  SafeAreaView,
-  StyleSheet,
-Alert,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-  TouchableOpacity,
+    SafeAreaView,
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    View,
+    Text,
+    StatusBar,
+    TouchableOpacity,
+    Dimensions,
 } from 'react-native';
 
 import {
@@ -34,29 +37,42 @@ const PendingView = () => (
     <View
         style={{
             flex: 1,
-            backgroundColor: 'lightgreen',
+            backgroundColor: "#FFFFFF",
             justifyContent: 'center',
             alignItems: 'center',
         }}
     >
-        <Text>Waiting</Text>
+        <ActivityIndicator size="large" color="#2aba56"/>
     </View>
 );
 
 function App() {
 
-  const [NFCmessage, setNFCmessage] = useState(null);
-  const [barcode, setBarcode] = useState(null);
-  const cameraRef = useRef(null);
+//// VARIABLES
+//
+    // states
+        const [NFCmessage, setNFCmessage] = useState(null);
+        const [barcode, setBarcode] = useState(null);
+        const [index, setIndex] = useState(0);
+        const [routes] = useState([
+            { key: 'first', title: 'NFC' },
+            { key: 'second', title: 'QR Scan' },
+        ]);
 
+    // Constants
+        const initialLayout = { width: Dimensions.get('window').width };
+
+    // References
+        const cameraRef = useRef(null);
+
+//// TOOL METHODS
+//
   const cancel = () => {
       NfcManager.unregisterTagEvent().catch(() => 0);
       setNFCmessage('-');
   };
 
   const test = async () => {
-
-
       try {
           await NfcManager.registerTagEvent();
       } catch (ex) {
@@ -70,80 +86,107 @@ function App() {
 
 
 
-
-
-
-  useEffect(() => {
-    if( NfcManager != null){
-      NfcManager.start();
-      NfcManager.setEventListener(NfcEvents.DiscoverTag, tag => {
-        NfcManager.setAlertMessageIOS('I got your tag!');
-          setNFCmessage(NdefParser.parseText(tag.ndefMessage[0]));
-        NfcManager.unregisterTagEvent().catch(() => 0);
-      });
-    }
-  });
-
-  return (
-
-      <ScrollView alignContent={'center'} style={styles.pageStyle} key="2">
-        <Text>NFC Demo</Text>
-        <TouchableOpacity
-            style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
-            onPress={test}
-        >
+//// VIEWS METHODS
+//
+    const NFCview = () => (<View alignContent={'center'} style={styles.pageStyle}>
+      <Text>NFC Demo</Text>
+      <TouchableOpacity
+          style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
+          onPress={test}
+      >
           <Text>Test</Text>
-        </TouchableOpacity>
+      </TouchableOpacity>
 
+      <TouchableOpacity
+          style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
+          onPress={cancel}
+      >
+          <Text>Cancel Test</Text>
+      </TouchableOpacity>
+      <Text>NFC message:{NFCmessage || '-'}</Text>
+  </View>);
+
+    const QRView = () => (<ScrollView alignContent={'center'} style={styles.pageStyle}>
+        <Text>QR code Scanner</Text>
+        <RNCamera
+            ref={cameraRef}
+            type={RNCamera.Constants.Type.back}
+            style={{
+                flex: 1,
+                minHeight: 450,
+                margin: 20
+            }}
+            autofocus={RNCamera.Constants.AutoFocus.off}
+            focusDepth={0.1}
+            onBarCodeRead={barcodeHandler}
+        >
+            {({ camera, status, recordAudioPermissionStatus }) => {
+                if (status !== 'READY') return <PendingView />;
+            }}
+        </RNCamera>
         <TouchableOpacity
             style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
-            onPress={cancel}
+            onPress={() => setBarcode(null)}s
         >
-          <Text>Cancel Test</Text>
+            <Text>Reset</Text>
         </TouchableOpacity>
-          <Text>NFC message:{NFCmessage || '-'}</Text>
-          <Text>QR code Scanner</Text>
-          <RNCamera
-              ref={cameraRef}
-              type={RNCamera.Constants.Type.back}
-              style={{
-                  flex: 1,
-                  borderWidth: 1,
-                  borderStyle: 'solid',
-                  borderColor: 'red',
-                  minHeight: 450,
-                  margin: 20
-              }}
-              autofocus={RNCamera.Constants.AutoFocus.off}
-              focusDepth={0.1}
-              onBarCodeRead={barcodeHandler}
-          >
-              {({ camera, status, recordAudioPermissionStatus }) => {
-                  if (status !== 'READY') return <PendingView />;
-              }}
-              </RNCamera>
-          <TouchableOpacity
-              style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
-              onPress={() => setBarcode(null)}s
-          >
-              <Text>Reset</Text>
-          </TouchableOpacity>
 
-          <Text style={{padding: 10, width: 200, margin: 20}}>QR codes: {barcode != null ? barcode.data : '-'}</Text>
+        <Text style={{padding: 10, width: 200, margin: 20}}>QR codes: {barcode != null ? barcode.data : '-'}</Text>
+    </ScrollView>);
 
-      </ScrollView>
+    const RENDER_SCENE = SceneMap({
+        first: NFCview,
+        second: QRView,
+    });
+
+//// USE EFFECTS
+//
+    useEffect(() => {
+        if( NfcManager != null){
+            NfcManager.start();
+            NfcManager.setEventListener(NfcEvents.DiscoverTag, tag => {
+                NfcManager.setAlertMessageIOS('I got your tag!');
+                setNFCmessage(NdefParser.parseText(tag.ndefMessage[0]));
+                NfcManager.unregisterTagEvent().catch(() => 0);
+            });
+        }
+    }, []);
+
+//// RENDER
+//
+  return (
+    <View style={styles.container}>
+        <TabView
+            navigationState={{ index, routes }}
+            renderScene={RENDER_SCENE}
+            onIndexChange={setIndex}
+            initialLayout={initialLayout}
+            lazy={true}
+            renderTabBar={ props =>
+                <TabBar {...props}
+                        style={styles.tabBar}
+                        indicatorStyle={styles.indicator}
+                />
+            }
+        />
+        <StatusBar backgroundColor="#2aba56" barStyle="light-content" />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  viewPager: {
-    flex: 1,
+    container: {
       height: '100%'
-  },
-  pageStyle: {
-
-    padding: 20,
-  }
+    },
+    pageStyle: {
+    flex: 1
+    },
+    tabBar: {
+      backgroundColor: "#2aba56"
+    },
+    indicator: {
+        backgroundColor: "#FFFFFF"
+    }
 });
 
 App = codePush(App);
