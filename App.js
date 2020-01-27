@@ -6,14 +6,15 @@
  * @flow
  */
 
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
   ScrollView,
   View,
   Text,
-  StatusBar, TouchableOpacity,
+  StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 
 import {
@@ -23,37 +24,31 @@ import {
   DebugInstructions,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+
+import NfcManager , {NfcEvents} from 'react-native-nfc-manager';
 import codePush from "react-native-code-push";
 
 
 function App() {
 
-  //
-  // const cancel = () => {
-  //     NfcManager.unregisterTagEvent().catch(() => 0);
-  // };
 
-  // const test = async () => {
-  //     try {
-  //         await NfcManager.registerTagEvent();
-  //     } catch (ex) {
-  //         console.warn('ex', ex);
-  //         NfcManager.unregisterTagEvent().catch(() => 0);
-  //     }
-  // };
+  const cancel = () => {
+      NfcManager.unregisterTagEvent().catch(() => 0);
+  };
+
+  const test = async () => {
+      try {
+          await NfcManager.registerTagEvent();
+      } catch (ex) {
+          console.warn('ex', ex);
+          NfcManager.unregisterTagEvent().catch(() => 0);
+      }
+  };
 
   const [] = useState(false);
 
 
   useEffect(() => {
-    const updater = new Updater({
-      repo: 'pct-org/getting-started',
-
-      onUpdateAvailable: onUpdateAvailable,
-      onDownloadStart: onDownloadStart,
-      onProgress: onProgress,
-    });
-
     if( NfcManager != null){
       NfcManager.start();
       NfcManager.setEventListener(NfcEvents.DiscoverTag, tag => {
@@ -64,29 +59,6 @@ function App() {
     }
 
   });
-
-  // UPDATE FUNCTIONS
-
-  const onUpdateAvailable = (githubRelease, update) => {
-    this.setState({
-      updateAvailable: true,
-      animating: true,
-      githubRelease,
-      update,
-    })
-  };
-
-  const onDownloadStart = () => {
-    this.setState({
-      updating: true,
-    })
-  };
-
-  const onProgress = (progress) => {
-    this.setState({
-      progress,
-    })
-  };
 
   return (
 
@@ -110,42 +82,14 @@ function App() {
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
+  viewPager: {
+    flex: 1
   },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
+  pageStyle: {
+    alignItems: 'center',
+    padding: 20,
+  }
 });
+
 App = codePush(App);
 export default App;
