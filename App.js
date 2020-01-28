@@ -218,6 +218,7 @@ function App() {
                 NfcManager.unregisterTagEvent().catch(() => 0);
             });
         }
+
         codePush.sync(
             {
                 updateDialog: true,
@@ -226,7 +227,7 @@ function App() {
             codePushStatusDidChange,
             updateProgress,
         );
-    }, []);
+    });
 
 //// RENDER
 //
