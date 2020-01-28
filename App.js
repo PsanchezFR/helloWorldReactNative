@@ -61,7 +61,7 @@ function App() {
             { key: 'first', title: 'NFC' },
             { key: 'second', title: 'QR Scan' },
         ]);
-    const [syncData, setSyncData] = useState({message: "No update", progress: false, statusConstant: codePush.SyncStatus.UP_TO_DATE});
+        const [syncDataLocal, setSyncData] = useState({message: "No update", progress: false, statusConstant: codePush.SyncStatus.UP_TO_DATE});
 
     // Constants
         const initialLayout = { width: Dimensions.get('window').width };
@@ -128,16 +128,10 @@ function App() {
         }
     };
 
-    const updateProgress = progress => setSyncData({message: syncData.message, progress: progress});
-    codePush.checkForUpdate().then(value => console.warn(value));
-    codePush.sync(
-        {
-            updateDialog: true,
-            installMode: codePush.InstallMode.ON_NEXT_RESTART,
-        },
-        codePushStatusDidChange,
-        updateProgress,
-    );
+    const updateProgress = progress => {setSyncData({message: syncDataLocal.message, progress: progress})};
+
+
+
 
 //// TOOL METHODS
 //
@@ -224,7 +218,15 @@ function App() {
                 NfcManager.unregisterTagEvent().catch(() => 0);
             });
         }
-    });
+        codePush.sync(
+            {
+                updateDialog: true,
+                installMode: codePush.InstallMode.ON_NEXT_RESTART,
+            },
+            codePushStatusDidChange,
+            updateProgress,
+        );
+    }, []);
 
 //// RENDER
 //
@@ -244,14 +246,14 @@ function App() {
                 />
             }
         />
-        <Text style={styles.updateMessageBar}>{syncData.message}</Text>
+        <Text style={styles.updateMessageBar}>{syncDataLocal.message}</Text>
         <ProgressBarAndroid
             style={styles.updateProgressBar}
-            progress={Number.isNaN(syncData.progress) ? 0 : syncData.progress}
+            progress={Number.isNaN(syncDataLocal.progress) ? syncDataLocal.progress : 0}
             indeterminate={
                 [codePush.SyncStatus.CHECKING_FOR_UPDATE,
-                 codePush.SyncStatus.AWAITING_USER_ACTION,
-                 codePush.SyncStatus.CHECKING_FOR_UPDATE].includes(syncData.statusConstant)
+                    codePush.SyncStatus.AWAITING_USER_ACTION,
+                    codePush.SyncStatus.CHECKING_FOR_UPDATE].includes(syncDataLocal.statusConstant)
             }
             styleAttr={"Horizontal"}
         />
@@ -273,11 +275,16 @@ const styles = StyleSheet.create({
         backgroundColor: "#FFFFFF"
     },
     updateMessageBar: {
-        height: "20px",
+        height: 20,
         width: "100%"
     },
     updateProgressBar: {
-        height: "5px",
+        height: 10,
+        backgroundColor: "#2aba56",
+        width: "100%"
+    },
+    bottomBarContainer: {
+        height: 25,
         width: "100%"
     }
 });
