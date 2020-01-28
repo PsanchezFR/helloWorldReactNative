@@ -130,7 +130,14 @@ function App() {
 
     const updateProgress = progress => {setSyncData({message: syncDataLocal.message, progress: progress})};
 
-
+    codePush.sync(
+        {
+            updateDialog: true,
+            installMode: codePush.InstallMode.ON_NEXT_RESTART,
+        },
+        codePushStatusDidChange,
+        updateProgress,
+    );
 
 
 //// TOOL METHODS
@@ -207,6 +214,8 @@ function App() {
         second: QRView,
     });
 
+
+
 //// USE EFFECTS
 //
     useEffect(() => {
@@ -219,14 +228,7 @@ function App() {
             });
         }
 
-        codePush.sync(
-            {
-                updateDialog: true,
-                installMode: codePush.InstallMode.ON_NEXT_RESTART,
-            },
-            codePushStatusDidChange,
-            updateProgress,
-        );
+
     });
 
 //// RENDER
