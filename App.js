@@ -19,6 +19,7 @@ import {
     StatusBar,
     TouchableOpacity,
     Dimensions,
+    ProgressBarAndroid
 } from 'react-native';
 
 import {
@@ -46,6 +47,8 @@ const PendingView = () => (
     </View>
 );
 
+
+
 function App() {
 
 //// VARIABLES
@@ -58,12 +61,83 @@ function App() {
             { key: 'first', title: 'NFC' },
             { key: 'second', title: 'QR Scan' },
         ]);
+    const [syncData, setSyncData] = useState({message: "No update", progress: false, statusConstant: codePush.SyncStatus.UP_TO_DATE});
 
     // Constants
         const initialLayout = { width: Dimensions.get('window').width };
 
     // References
         const cameraRef = useRef(null);
+
+//// CODE PUSH
+//
+    const codePushStatusDidChange = syncStatus => {
+        switch(syncStatus) {
+            case codePush.SyncStatus.CHECKING_FOR_UPDATE:
+                setSyncData({
+                    message: "Checking for update.",
+                    statusConstant: codePush.SyncStatus.CHECKING_FOR_UPDATE
+                });
+                break;
+            case codePush.SyncStatus.DOWNLOADING_PACKAGE:
+                setSyncData({
+                    message: "Downloading package.",
+                    statusConstant: codePush.SyncStatus.DOWNLOADING_PACKAGE
+                });
+                break;
+            case codePush.SyncStatus.AWAITING_USER_ACTION:
+                setSyncData({
+                    message: "Awaiting user action.",
+                    statusConstant: codePush.SyncStatus.AWAITING_USER_ACTION
+                });
+                break;
+            case codePush.SyncStatus.INSTALLING_UPDATE:
+                setSyncData({
+                    message: "Installing update.",
+                    statusConstant: codePush.SyncStatus.INSTALLING_UPDATE
+                });
+                break;
+            case codePush.SyncStatus.UP_TO_DATE:
+                setSyncData({
+                    message: "App up to date.",
+                    progress: false,
+                    statusConstant: codePush.SyncStatus.UP_TO_DATE
+                });
+                break;
+            case codePush.SyncStatus.UPDATE_IGNORED:
+                setSyncData({
+                    message: "Update cancelled by user.",
+                    progress: false,
+                    statusConstant: codePush.SyncStatus.UPDATE_IGNORED
+                });
+                break;
+            case codePush.SyncStatus.UPDATE_INSTALLED:
+                setSyncData({
+                    message: "Update installed and will be applied on restart.",
+                    progress: false,
+                    statusConstant: codePush.SyncStatus.UPDATE_INSTALLED
+                });
+                break;
+            case codePush.SyncStatus.UNKNOWN_ERROR:
+                setSyncData({
+                    message: "An unknown error occurred.",
+                    progress: false,
+                    statusConstant: codePush.SyncStatus.UNKNOWN_ERROR
+                });
+                break;
+        }
+    };
+
+    const updateProgress = progress => setSyncData({message: syncData.message, progress: progress});
+    codePush.checkForUpdate().then(value => console.warn(value));
+    codePush.sync(
+        {
+            updateDialog: true,
+            installMode: codePush.InstallMode.ON_NEXT_RESTART,
+        },
+        codePushStatusDidChange,
+        updateProgress,
+    );
 
 //// TOOL METHODS
 //
@@ -126,7 +200,7 @@ function App() {
         </RNCamera>
         <TouchableOpacity
             style={{padding: 10, width: 200, margin: 20, borderWidth: 1, borderColor: 'black'}}
-            onPress={() => setBarcode(null)}s
+            onPress={() => setBarcode(null)}
         >
             <Text>Reset</Text>
         </TouchableOpacity>
@@ -150,12 +224,13 @@ function App() {
                 NfcManager.unregisterTagEvent().catch(() => 0);
             });
         }
-    }, []);
+    });
 
 //// RENDER
 //
   return (
     <View style={styles.container}>
+        <StatusBar backgroundColor="#2aba56" barStyle="light-content" />
         <TabView
             navigationState={{ index, routes }}
             renderScene={RENDER_SCENE}
@@ -169,7 +244,17 @@ function App() {
                 />
             }
         />
-        <StatusBar backgroundColor="#2aba56" barStyle="light-content" />
+        <Text style={styles.updateMessageBar}>{syncData.message}</Text>
+        <ProgressBarAndroid
+            style={styles.updateProgressBar}
+            progress={Number.isNaN(syncData.progress) ? 0 : syncData.progress}
+            indeterminate={
+                [codePush.SyncStatus.CHECKING_FOR_UPDATE,
+                 codePush.SyncStatus.AWAITING_USER_ACTION,
+                 codePush.SyncStatus.CHECKING_FOR_UPDATE].includes(syncData.statusConstant)
+            }
+            styleAttr={"Horizontal"}
+        />
     </View>
   );
 }
@@ -186,8 +271,21 @@ const styles = StyleSheet.create({
     },
     indicator: {
         backgroundColor: "#FFFFFF"
+    },
+    updateMessageBar: {
+        height: "20px",
+        width: "100%"
+    },
+    updateProgressBar: {
+        height: "5px",
+        width: "100%"
     }
 });
 
-App = codePush(App);
+let codePushOptions = {
+    checkFrequency: codePush.CheckFrequency.ON_APP_START,
+
+};
+
+App = codePush(codePushOptions)(App);
 export default App;
