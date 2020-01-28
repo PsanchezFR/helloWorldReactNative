@@ -279,11 +279,14 @@ const styles = StyleSheet.create({
         width: "100%"
     },
     updateProgressBar: {
-        height: 10,
+        height: 6,
         backgroundColor: "#2aba56",
         width: "100%"
     },
     bottomBarContainer: {
+        borderWidth: 1,
+        borderStyle: "solid",
+        borderColor: '#999999',
         height: 25,
         width: "100%"
     }
